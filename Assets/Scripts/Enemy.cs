@@ -98,7 +98,7 @@ public class Enemy : MonoBehaviour
 
     protected void TryDealContactDamage()
     {
-        if (_isDead || player == null) return;
+        if (_isDead || player == null || player.IsInvulnerable) return;
 
         if (Time.time >= _lastAttackTime + _attackCooldown)
         {

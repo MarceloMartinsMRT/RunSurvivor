@@ -36,6 +36,7 @@ public class Player : MonoBehaviour
     public float magnetRadius = 3.5f;
     public float critChance = 0.10f; // 10% de chance base
     public float critMultiplier = 2.0f; // 2.0x dano crítico
+    public float invulnerabilityDuration = 1.0f; // 1 segundo de invulnerabilidade após tomar dano
 
     [Header("Progression")]
     public int currentLevel = 1;
@@ -55,6 +56,7 @@ public class Player : MonoBehaviour
     public Vector2 Direction { get => _direction; set => _direction = value; }
     public Vector2 LastFacingDirection => lastFacingDirection;
     public LayerMask EnemyLayer => enemyLayer;
+    public bool IsInvulnerable => isInvulnerable;
 
     void Awake()
     {
@@ -84,6 +86,12 @@ public class Player : MonoBehaviour
         else
         {
             movementCursorRenderer = movementCursor.GetComponentInChildren<SpriteRenderer>();
+        }
+
+        // Inicializa o cursor apontador de baú de tesouro
+        if (GetComponent<ChestPointer>() == null)
+        {
+            gameObject.AddComponent<ChestPointer>();
         }
     }
 
@@ -324,6 +332,9 @@ public class Player : MonoBehaviour
     {
         if (isInvulnerable || isDead) return;
 
+        // Ativação síncrona imediata da invulnerabilidade para evitar dano consecutivo instantâneo
+        isInvulnerable = true;
+
         currentHealthPoints -= damage;
         DamagePopup.CreatePlayerDamage(transform.position, damage);
         if (currentHealthPoints <= 0)
@@ -341,19 +352,27 @@ public class Player : MonoBehaviour
     private IEnumerator InvulnerabilityRoutine()
     {
         isInvulnerable = true;
+        float elapsed = 0f;
+        float blinkInterval = 0.08f;
+        bool isFaded = false;
+
+        // Feedback clássico de piscar translúcido/i-frame durante todo o período de invencibilidade
+        while (elapsed < invulnerabilityDuration)
+        {
+            elapsed += blinkInterval;
+            isFaded = !isFaded;
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = isFaded ? new Color(1f, 0.45f, 0.45f, 0.35f) : new Color(1f, 0.9f, 0.9f, 0.95f);
+            }
+
+            yield return new WaitForSeconds(blinkInterval);
+        }
+
         if (spriteRenderer != null)
         {
-            for (int i = 0; i < 4; i++)
-            {
-                spriteRenderer.color = new Color(1f, 0.4f, 0.4f, 0.5f);
-                yield return new WaitForSeconds(0.08f);
-                spriteRenderer.color = Color.white;
-                yield return new WaitForSeconds(0.08f);
-            }
-        }
-        else
-        {
-            yield return new WaitForSeconds(0.4f);
+            spriteRenderer.color = Color.white;
         }
         isInvulnerable = false;
     }

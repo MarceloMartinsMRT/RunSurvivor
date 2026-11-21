@@ -1,7 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class TreasureChest : MonoBehaviour
 {
+    public static List<TreasureChest> activeChests = new List<TreasureChest>();
+
     [Header("Chest Settings")]
     public int upgradeCount = 3; // Quantidade de melhorias que o baú concede (1 a 3)
 
@@ -14,6 +17,21 @@ public class TreasureChest : MonoBehaviour
 
     private static Sprite cachedChestSprite;
     private static Sprite cachedAuraSprite;
+
+    void OnEnable()
+    {
+        if (!activeChests.Contains(this)) activeChests.Add(this);
+    }
+
+    void OnDisable()
+    {
+        activeChests.Remove(this);
+    }
+
+    void OnDestroy()
+    {
+        activeChests.Remove(this);
+    }
 
     void Start()
     {

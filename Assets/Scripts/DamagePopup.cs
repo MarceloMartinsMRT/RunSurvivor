@@ -6,9 +6,11 @@ public class DamagePopup : MonoBehaviour
     private TextMeshPro textMesh;
     private float disappearTimer;
     private Color textColor;
+    private Color outlineColor = Color.black;
     private Vector3 moveVector;
 
     private const float DISAPPEAR_TIMER_MAX = 0.65f;
+    private const float OUTLINE_WIDTH = 0.32f;
 
     void Awake()
     {
@@ -19,51 +21,95 @@ public class DamagePopup : MonoBehaviour
     {
         if (textMesh == null) textMesh = GetComponent<TextMeshPro>();
 
+        // Texto em negrito para dar volume aos números
+        textMesh.fontStyle = FontStyles.Bold;
         textMesh.text = damageAmount.ToString();
 
         if (isCritical)
         {
-            // Dano Crítico: maior, dourado/laranja vibrante
-            textMesh.fontSize = 6f;
-            textColor = new Color(1f, 0.45f, 0.1f, 1f);
+            // Dano Crítico: maior, laranja/ouro vibrante com borda preta grossa
+            textMesh.fontSize = 6.5f;
+            textColor = new Color(1f, 0.5f, 0.1f, 1f); // Laranja incandescente
             textMesh.text += "!";
-            transform.localScale = Vector3.one * 1.35f;
+            transform.localScale = Vector3.one * 1.4f;
         }
         else
         {
-            // Dano Normal: branco com tom levemente amarelado
-            textMesh.fontSize = 4.5f;
-            textColor = new Color(1f, 0.95f, 0.75f, 1f);
+            // Dano Normal: branco puro com leve tom amarelo para alto contraste
+            textMesh.fontSize = 4.8f;
+            textColor = new Color(1f, 0.98f, 0.8f, 1f);
             transform.localScale = Vector3.one;
         }
 
         textMesh.color = textColor;
+        ApplyOutline(Color.black, OUTLINE_WIDTH);
+
         disappearTimer = DISAPPEAR_TIMER_MAX;
 
         // Efeito de arco: sobe com leve dispersão lateral
-        moveVector = new Vector3(Random.Range(-0.9f, 0.9f), 2.4f, 0f);
+        moveVector = new Vector3(Random.Range(-0.85f, 0.85f), 2.5f, 0f);
+    }
+
+    public void SetupPlayerDamage(int damageAmount)
+    {
+        if (textMesh == null) textMesh = GetComponent<TextMeshPro>();
+
+        textMesh.fontStyle = FontStyles.Bold;
+        textMesh.fontSize = 5.2f;
+        textMesh.text = "-" + damageAmount;
+        textColor = new Color(1f, 0.25f, 0.25f, 1f); // Vermelho vivo
+        textMesh.color = textColor;
+
+        ApplyOutline(Color.black, OUTLINE_WIDTH);
+
+        disappearTimer = DISAPPEAR_TIMER_MAX;
+        moveVector = new Vector3(Random.Range(-0.5f, 0.5f), 2.0f, 0f);
+    }
+
+    private void ApplyOutline(Color color, float width)
+    {
+        outlineColor = color;
+        textMesh.outlineColor = outlineColor;
+        textMesh.outlineWidth = width;
+
+        if (textMesh.fontMaterial != null)
+        {
+            textMesh.fontMaterial.EnableKeyword("OUTLINE_ON");
+            textMesh.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, outlineColor);
+            textMesh.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
+        }
     }
 
     void Update()
     {
-        // Movimento para cima e desaceleração
+        // Movimento para cima e desaceleração vertical
         transform.position += moveVector * Time.deltaTime;
-        moveVector.y -= 3.0f * Time.deltaTime;
+        moveVector.y -= 3.2f * Time.deltaTime;
 
-        // Efeito de impacto (shrink back)
+        // Efeito de "punch" elástico na escala
         if (transform.localScale.x > 1f)
         {
-            transform.localScale -= Vector3.one * 1.5f * Time.deltaTime;
+            transform.localScale -= Vector3.one * 1.8f * Time.deltaTime;
         }
 
         disappearTimer -= Time.deltaTime;
 
-        // Fade out na metade final
+        // Fade out na metade final (tanto o texto quanto a borda desaparecem juntos)
         if (disappearTimer < DISAPPEAR_TIMER_MAX * 0.5f)
         {
             float fadeSpeed = 3.5f;
             textColor.a -= fadeSpeed * Time.deltaTime;
-            if (textMesh != null) textMesh.color = textColor;
+            outlineColor.a = textColor.a;
+
+            if (textMesh != null)
+            {
+                textMesh.color = textColor;
+                textMesh.outlineColor = outlineColor;
+                if (textMesh.fontMaterial != null)
+                {
+                    textMesh.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, outlineColor);
+                }
+            }
 
             if (textColor.a <= 0f)
             {
@@ -84,7 +130,7 @@ public class DamagePopup : MonoBehaviour
         MeshRenderer mr = popupObj.GetComponent<MeshRenderer>();
         if (mr != null)
         {
-            mr.sortingOrder = 50; // Na frente de sprites e inimigos
+            mr.sortingOrder = 50; // Na frente de qualquer sprite de monstro e mapa
         }
 
         DamagePopup damagePopup = popupObj.AddComponent<DamagePopup>();
@@ -101,9 +147,6 @@ public class DamagePopup : MonoBehaviour
 
         TextMeshPro tm = popupObj.AddComponent<TextMeshPro>();
         tm.alignment = TextAlignmentOptions.Center;
-        tm.fontSize = 5f;
-        tm.text = "-" + damageAmount;
-        tm.color = new Color(1f, 0.25f, 0.25f, 1f); // Vermelho
 
         MeshRenderer mr = popupObj.GetComponent<MeshRenderer>();
         if (mr != null)
@@ -112,10 +155,7 @@ public class DamagePopup : MonoBehaviour
         }
 
         DamagePopup damagePopup = popupObj.AddComponent<DamagePopup>();
-        damagePopup.textMesh = tm;
-        damagePopup.textColor = tm.color;
-        damagePopup.disappearTimer = DISAPPEAR_TIMER_MAX;
-        damagePopup.moveVector = new Vector3(Random.Range(-0.5f, 0.5f), 2.0f, 0f);
+        damagePopup.SetupPlayerDamage(damageAmount);
 
         return damagePopup;
     }

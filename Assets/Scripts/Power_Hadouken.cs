@@ -22,10 +22,6 @@ public class Power_Hadouken : MonoBehaviour
         if (playerObj != null)
         {
             player = playerObj.GetComponent<Player>();
-            if (player != null)
-            {
-                power = power * player.damageMultiplier + (player.currentPower - 1f) * 5f;
-            }
         }
     }
 
@@ -60,7 +56,9 @@ public class Power_Hadouken : MonoBehaviour
         if (collision.TryGetComponent<Enemy>(out Enemy enemy))
         {
             hits++;
-            enemy.TakeDamage((int)power, transform.right);
+            bool isCrit = false;
+            int finalDmg = player != null ? player.CalculateDamage(power, out isCrit) : (int)power;
+            enemy.TakeDamage(finalDmg, transform.right, isCrit);
 
             if (hits >= totalHits)
             {

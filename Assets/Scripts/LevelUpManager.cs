@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -21,6 +21,9 @@ public class LevelUpManager : MonoBehaviour
     private Player player;
     private Power_Magic_Barrier magicBarrier;
     private Weapon_Aura holyAura;
+    private Weapon_ThrowingKnives throwingKnives;
+    private Weapon_MeteorRain meteorRain;
+    private Weapon_Whip whip;
 
     private int hadoukenLevel = 1;
 
@@ -38,8 +41,11 @@ public class LevelUpManager : MonoBehaviour
             player = playerObj.GetComponent<Player>();
             magicBarrier = playerObj.GetComponentInChildren<Power_Magic_Barrier>();
             holyAura = playerObj.GetComponentInChildren<Weapon_Aura>();
+            throwingKnives = playerObj.GetComponentInChildren<Weapon_ThrowingKnives>();
+            meteorRain = playerObj.GetComponentInChildren<Weapon_MeteorRain>();
+            whip = playerObj.GetComponentInChildren<Weapon_Whip>();
 
-            // Se as armas ainda não estiverem no Player, adiciona como componentes
+            // Instancia armas como componentes no Player se ainda não existirem
             if (magicBarrier == null)
             {
                 GameObject barrierObj = new GameObject("Power_Magic_Barrier");
@@ -55,6 +61,30 @@ public class LevelUpManager : MonoBehaviour
                 auraObj.transform.localPosition = Vector3.zero;
                 holyAura = auraObj.AddComponent<Weapon_Aura>();
             }
+
+            if (throwingKnives == null)
+            {
+                GameObject knivesObj = new GameObject("Weapon_ThrowingKnives");
+                knivesObj.transform.SetParent(playerObj.transform);
+                knivesObj.transform.localPosition = Vector3.zero;
+                throwingKnives = knivesObj.AddComponent<Weapon_ThrowingKnives>();
+            }
+
+            if (meteorRain == null)
+            {
+                GameObject meteorObj = new GameObject("Weapon_MeteorRain");
+                meteorObj.transform.SetParent(playerObj.transform);
+                meteorObj.transform.localPosition = Vector3.zero;
+                meteorRain = meteorObj.AddComponent<Weapon_MeteorRain>();
+            }
+
+            if (whip == null)
+            {
+                GameObject whipObj = new GameObject("Weapon_Whip");
+                whipObj.transform.SetParent(playerObj.transform);
+                whipObj.transform.localPosition = Vector3.zero;
+                whip = whipObj.AddComponent<Weapon_Whip>();
+            }
         }
     }
 
@@ -64,7 +94,7 @@ public class LevelUpManager : MonoBehaviour
         Time.timeScale = 0f;
 
         List<UpgradeOption> availableUpgrades = GetAvailableUpgrades();
-        // Embaralha e pega até 3 opções
+        // Embaralha e pega até 3 opções aleatórias
         Shuffle(availableUpgrades);
         List<UpgradeOption> selected = availableUpgrades.GetRange(0, Mathf.Min(3, availableUpgrades.Count));
 
@@ -113,7 +143,7 @@ public class LevelUpManager : MonoBehaviour
             });
         }
 
-        // 3. Aura Sagrada (Dano em Área ao Redor)
+        // 3. Aura Sagrada (Dano Contínuo ao Redor)
         int auraLv = (holyAura != null) ? holyAura.level : 0;
         if (auraLv < 5)
         {
@@ -121,7 +151,7 @@ public class LevelUpManager : MonoBehaviour
             {
                 id = "aura",
                 title = auraLv == 0 ? "Nova Arma: Aura Sagrada" : "Aura Sagrada Lv " + (auraLv + 1),
-                description = auraLv == 0 ? "Anel de energia que queima continuamente inimigos próximos." : "+25% Área e dano ampliado da Aura!",
+                description = auraLv == 0 ? "Anel de energia sagrada que queima continuamente inimigos próximos." : "+25% Área e dano ampliado da Aura!",
                 applyUpgrade = () =>
                 {
                     if (holyAura != null) holyAura.UnlockOrUpgrade();
@@ -129,7 +159,55 @@ public class LevelUpManager : MonoBehaviour
             });
         }
 
-        // 4. Passivas
+        // 4. Facas de Arremesso (Disparo na Direção do Movimento)
+        int knivesLv = (throwingKnives != null) ? throwingKnives.level : 0;
+        if (knivesLv < 5)
+        {
+            list.Add(new UpgradeOption
+            {
+                id = "knives",
+                title = knivesLv == 0 ? "Nova Arma: Facas de Arremesso" : "Facas de Arremesso Lv " + (knivesLv + 1),
+                description = knivesLv == 0 ? "Arremessa adagas velozes na direção do seu movimento/visão." : "+1 Faca em leque, perfuração de inimigos e mais dano!",
+                applyUpgrade = () =>
+                {
+                    if (throwingKnives != null) throwingKnives.UnlockOrUpgrade();
+                }
+            });
+        }
+
+        // 5. Chuva de Meteoros / Raios (Ataque Celestial em Área)
+        int meteorLv = (meteorRain != null) ? meteorRain.level : 0;
+        if (meteorLv < 5)
+        {
+            list.Add(new UpgradeOption
+            {
+                id = "meteor",
+                title = meteorLv == 0 ? "Nova Arma: Fúria Celestial" : "Fúria Celestial Lv " + (meteorLv + 1),
+                description = meteorLv == 0 ? "Chuva contínua de meteoros devastadores sobre inimigos na tela." : "+1 Meteoro por queda, maior raio de impacto e dano explosivo!",
+                applyUpgrade = () =>
+                {
+                    if (meteorRain != null) meteorRain.UnlockOrUpgrade();
+                }
+            });
+        }
+
+        // 6. Chicote Frontal (Corte Amplo em Arco)
+        int whipLv = (whip != null) ? whip.level : 0;
+        if (whipLv < 5)
+        {
+            list.Add(new UpgradeOption
+            {
+                id = "whip",
+                title = whipLv == 0 ? "Nova Arma: Chicote Sagrado" : "Chicote Sagrado Lv " + (whipLv + 1),
+                description = whipLv == 0 ? "Golpe horizontal devastador à frente que repele inimigos em massa." : (whipLv == 2 ? "Chicote Duplo! Golpeia à frente E atrás!" : "+35% Dano, maior alcance e knockback reforçado!"),
+                applyUpgrade = () =>
+                {
+                    if (whip != null) whip.UnlockOrUpgrade();
+                }
+            });
+        }
+
+        // 7. Melhorias Passivas
         list.Add(new UpgradeOption
         {
             id = "boots",
@@ -141,25 +219,41 @@ public class LevelUpManager : MonoBehaviour
         list.Add(new UpgradeOption
         {
             id = "damage",
-            title = "Tomo de Poder",
+            title = "Tomo do Poder",
             description = "+20% Dano em TODAS as armas.",
             applyUpgrade = () => player.IncreaseDamage(20f)
         });
 
         list.Add(new UpgradeOption
         {
-            id = "magnet",
-            title = "Ímã Atraente",
-            description = "+40% Raio de atração de gemas de XP.",
-            applyUpgrade = () => player.IncreaseMagnetRadius(40f)
+            id = "crit_chance",
+            title = "Olho de Águia",
+            description = "+8% de Chance de Acerto Crítico em todos os ataques.",
+            applyUpgrade = () => player.IncreaseCritChance(8f)
+        });
+
+        list.Add(new UpgradeOption
+        {
+            id = "crit_mult",
+            title = "Lâmina Vorpal",
+            description = "+40% de Multiplicador de Dano Crítico.",
+            applyUpgrade = () => player.IncreaseCritMultiplier(0.40f)
         });
 
         list.Add(new UpgradeOption
         {
             id = "cooldown",
             title = "Ampulheta Rápida",
-            description = "-15% Tempo de recarga de todas as habilidades.",
-            applyUpgrade = () => player.ReduceCooldown(15f)
+            description = "-12% Tempo de recarga de todas as habilidades.",
+            applyUpgrade = () => player.ReduceCooldown(12f)
+        });
+
+        list.Add(new UpgradeOption
+        {
+            id = "magnet",
+            title = "Ímã Atraente",
+            description = "+35% Raio de atração de gemas de XP.",
+            applyUpgrade = () => player.IncreaseMagnetRadius(35f)
         });
 
         list.Add(new UpgradeOption
@@ -181,7 +275,6 @@ public class LevelUpManager : MonoBehaviour
     {
         if (levelUpPanel != null) Destroy(levelUpPanel);
 
-        // Acha o Canvas da cena
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null)
         {
@@ -205,7 +298,7 @@ public class LevelUpManager : MonoBehaviour
         Image bg = levelUpPanel.AddComponent<Image>();
         bg.color = new Color(0f, 0f, 0f, 0.75f);
 
-        // Título "LEVEL UP!"
+        // Título "★ LEVEL UP! ★"
         GameObject titleObj = new GameObject("TitleText");
         titleObj.transform.SetParent(levelUpPanel.transform, false);
         TextMeshProUGUI titleTMP = titleObj.AddComponent<TextMeshProUGUI>();

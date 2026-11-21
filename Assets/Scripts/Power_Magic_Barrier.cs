@@ -121,9 +121,10 @@ public class Power_Magic_Barrier : MonoBehaviour
     {
         if (enemy != null && !enemy.IsDead)
         {
-            float finalDmg = damage * (player != null ? player.damageMultiplier : 1f);
+            bool isCrit = false;
+            int finalDmg = player != null ? player.CalculateDamage(damage, out isCrit) : (int)damage;
             Vector2 knockback = (enemy.transform.position - transform.position).normalized;
-            enemy.TakeDamage((int)finalDmg, knockback);
+            enemy.TakeDamage(finalDmg, knockback, isCrit);
         }
     }
 

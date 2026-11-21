@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Weapon_Aura : MonoBehaviour
@@ -92,7 +92,6 @@ public class Weapon_Aura : MonoBehaviour
     private void PulseDamage()
     {
         Collider2D[] enemies = Physics2D.OverlapCircleAll(transform.position, auraRadius, enemyLayer);
-        float finalDamage = damage * (player != null ? player.damageMultiplier : 1f);
 
         for (int i = 0; i < enemies.Length; i++)
         {
@@ -100,8 +99,10 @@ public class Weapon_Aura : MonoBehaviour
             Enemy enemy = enemies[i].GetComponent<Enemy>();
             if (enemy != null && !enemy.IsDead)
             {
+                bool isCrit = false;
+                int finalDamage = player != null ? player.CalculateDamage(damage, out isCrit) : (int)damage;
                 Vector2 knockback = (enemy.transform.position - transform.position).normalized;
-                enemy.TakeDamage((int)finalDamage, knockback);
+                enemy.TakeDamage(finalDamage, knockback, isCrit);
             }
         }
     }

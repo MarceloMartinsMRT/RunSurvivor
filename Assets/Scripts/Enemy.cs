@@ -106,7 +106,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public virtual void TakeDamage(int damage, Vector2 knockbackDir = default)
+    public virtual void TakeDamage(int damage, Vector2 knockbackDir = default, bool isCrit = false)
     {
         if (_isDead) return;
 
@@ -124,8 +124,7 @@ public class Enemy : MonoBehaviour
             rb.position += knockbackDir.normalized * 0.25f;
         }
 
-        // Número de dano flutuante (com chance de 15% de crítico ou se dano >= 25)
-        bool isCrit = (Random.value < 0.15f) || (damage >= 25);
+        // Número de dano flutuante sincronizado com crítico
         DamagePopup.Create(transform.position, damage, isCrit);
 
         if (_health <= 0)

@@ -34,6 +34,8 @@ public class Player : MonoBehaviour
     public float cooldownMultiplier = 1f;
     public int extraProjectiles = 0;
     public float magnetRadius = 3.5f;
+    public float critChance = 0.10f; // 10% de chance base
+    public float critMultiplier = 2.0f; // 2.0x dano crítico
 
     [Header("Progression")]
     public int currentLevel = 1;
@@ -51,6 +53,8 @@ public class Player : MonoBehaviour
     private static Sprite cachedArrowSprite;
 
     public Vector2 Direction { get => _direction; set => _direction = value; }
+    public Vector2 LastFacingDirection => lastFacingDirection;
+    public LayerMask EnemyLayer => enemyLayer;
 
     void Awake()
     {
@@ -305,6 +309,17 @@ public class Player : MonoBehaviour
         }
     }
 
+    public int CalculateDamage(float baseDamage, out bool isCrit)
+    {
+        float totalDamage = (baseDamage * damageMultiplier) + (currentPower - 1f) * 4f;
+        isCrit = Random.value < critChance;
+        if (isCrit)
+        {
+            totalDamage *= critMultiplier;
+        }
+        return Mathf.Max(1, Mathf.RoundToInt(totalDamage));
+    }
+
     public void TakeDamage(int damage)
     {
         if (isInvulnerable || isDead) return;
@@ -403,6 +418,16 @@ public class Player : MonoBehaviour
     public void AddExtraProjectile(int count = 1)
     {
         extraProjectiles += count;
+    }
+
+    public void IncreaseCritChance(float percentage)
+    {
+        critChance += percentage / 100f;
+    }
+
+    public void IncreaseCritMultiplier(float amount)
+    {
+        critMultiplier += amount;
     }
 
     private void UpdateHealthUI()

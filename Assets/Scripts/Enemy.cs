@@ -124,6 +124,10 @@ public class Enemy : MonoBehaviour
             rb.position += knockbackDir.normalized * 0.25f;
         }
 
+        // Número de dano flutuante (com chance de 15% de crítico ou se dano >= 25)
+        bool isCrit = (Random.value < 0.15f) || (damage >= 25);
+        DamagePopup.Create(transform.position, damage, isCrit);
+
         if (_health <= 0)
         {
             Die();

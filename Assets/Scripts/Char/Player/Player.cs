@@ -310,6 +310,7 @@ public class Player : MonoBehaviour
         if (isInvulnerable || isDead) return;
 
         currentHealthPoints -= damage;
+        DamagePopup.CreatePlayerDamage(transform.position, damage);
         if (currentHealthPoints <= 0)
         {
             currentHealthPoints = 0;

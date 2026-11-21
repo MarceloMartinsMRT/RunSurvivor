@@ -10,6 +10,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected int _damage = 10;
     [SerializeField] protected float _attackCooldown = 0.8f;
     [SerializeField] protected int _xpReward = 1;
+    [SerializeField] public float knockbackResistance = 0f;
 
     [Header("Components")]
     [SerializeField] protected Rigidbody2D rb;
@@ -118,10 +119,11 @@ public class Enemy : MonoBehaviour
             StartCoroutine(FlashHurt());
         }
 
-        // Leve knockback para afastar o inimigo
+        // Leve knockback atenuado pela resistência a repulsão
         if (knockbackDir != default && rb != null)
         {
-            rb.position += knockbackDir.normalized * 0.25f;
+            float kb = 0.25f * (1f - Mathf.Clamp01(knockbackResistance));
+            rb.position += knockbackDir.normalized * kb;
         }
 
         // Número de dano flutuante sincronizado com crítico

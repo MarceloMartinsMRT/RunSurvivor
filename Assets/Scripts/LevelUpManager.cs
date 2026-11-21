@@ -101,7 +101,37 @@ public class LevelUpManager : MonoBehaviour
         DisplayUI(selected);
     }
 
-    private List<UpgradeOption> GetAvailableUpgrades()
+    public void OpenTreasureChest(int count = 3)
+    {
+        GlobalVariables._gameIsPaused = true;
+        Time.timeScale = 0f;
+
+        List<UpgradeOption> available = GetAvailableUpgrades();
+        Shuffle(available);
+
+        int grantedCount = Mathf.Clamp(count, 1, Mathf.Min(3, available.Count));
+        List<UpgradeOption> granted = new List<UpgradeOption>();
+
+        for (int i = 0; i < grantedCount; i++)
+        {
+            UpgradeOption opt = available[i];
+            if (opt.applyUpgrade != null)
+            {
+                opt.applyUpgrade();
+            }
+            granted.Add(opt);
+        }
+
+        // Cura um pouco da vida do jogador de bônus
+        if (player != null)
+        {
+            player.Heal(25f);
+        }
+
+        DisplayChestUI(granted);
+    }
+
+    public List<UpgradeOption> GetAvailableUpgrades()
     {
         List<UpgradeOption> list = new List<UpgradeOption>();
 
@@ -374,6 +404,163 @@ public class LevelUpManager : MonoBehaviour
                 SelectUpgrade(opt);
             });
         }
+    }
+
+    private void DisplayChestUI(List<UpgradeOption> granted)
+    {
+        if (levelUpPanel != null) Destroy(levelUpPanel);
+
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            GameObject canvasObj = new GameObject("ChestCanvas");
+            canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasObj.AddComponent<CanvasScaler>();
+            canvasObj.AddComponent<GraphicRaycaster>();
+        }
+
+        levelUpPanel = new GameObject("ChestRewardPanel");
+        levelUpPanel.transform.SetParent(canvas.transform, false);
+
+        RectTransform panelRect = levelUpPanel.AddComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+
+        // Fundo escuro semi-transparente com tom místico
+        Image bg = levelUpPanel.AddComponent<Image>();
+        bg.color = new Color(0.05f, 0.05f, 0.08f, 0.88f);
+
+        // Título "★ BAÚ DE TESOURO! ★"
+        GameObject titleObj = new GameObject("ChestTitle");
+        titleObj.transform.SetParent(levelUpPanel.transform, false);
+        TextMeshProUGUI titleTMP = titleObj.AddComponent<TextMeshProUGUI>();
+        titleTMP.text = "★ BAÚ DE TESOURO! ★";
+        titleTMP.fontSize = 42;
+        titleTMP.fontStyle = FontStyles.Bold;
+        titleTMP.alignment = TextAlignmentOptions.Center;
+        titleTMP.color = new Color(1f, 0.85f, 0.2f);
+        RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+        titleRect.anchoredPosition = new Vector2(0, 160);
+        titleRect.sizeDelta = new Vector2(650, 60);
+
+        // Subtítulo
+        GameObject subObj = new GameObject("ChestSubtitle");
+        subObj.transform.SetParent(levelUpPanel.transform, false);
+        TextMeshProUGUI subTMP = subObj.AddComponent<TextMeshProUGUI>();
+        subTMP.text = $"Você abriu um baú lendário e ganhou {granted.Count} recompensa(s) mágica(s)!";
+        subTMP.fontSize = 18;
+        subTMP.alignment = TextAlignmentOptions.Center;
+        subTMP.color = new Color(0.9f, 0.95f, 1f, 0.95f);
+        RectTransform subRect = subObj.GetComponent<RectTransform>();
+        subRect.anchoredPosition = new Vector2(0, 110);
+        subRect.sizeDelta = new Vector2(650, 40);
+
+        // Container para os cartões concedidos
+        float cardWidth = 260f;
+        float cardHeight = 180f;
+        float spacing = 20f;
+        float totalWidth = (cardWidth * granted.Count) + (spacing * (granted.Count - 1));
+        float startX = -totalWidth / 2f + (cardWidth / 2f);
+
+        for (int i = 0; i < granted.Count; i++)
+        {
+            UpgradeOption opt = granted[i];
+            float posX = startX + i * (cardWidth + spacing);
+
+            GameObject cardObj = new GameObject("GrantedCard_" + i);
+            cardObj.transform.SetParent(levelUpPanel.transform, false);
+            RectTransform cardRect = cardObj.AddComponent<RectTransform>();
+            cardRect.anchoredPosition = new Vector2(posX, -15);
+            cardRect.sizeDelta = new Vector2(cardWidth, cardHeight);
+
+            Image cardBg = cardObj.AddComponent<Image>();
+            cardBg.color = new Color(0.12f, 0.22f, 0.18f, 0.95f); // Tom esmeralda/dourado de recompensa
+
+            // Borda dourada brilhante
+            Outline outline = cardObj.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 0.85f, 0.25f, 0.9f);
+            outline.effectDistance = new Vector2(2.5f, 2.5f);
+
+            // Nome da melhoria
+            GameObject optTitleObj = new GameObject("CardTitle");
+            optTitleObj.transform.SetParent(cardObj.transform, false);
+            TextMeshProUGUI optTitle = optTitleObj.AddComponent<TextMeshProUGUI>();
+            optTitle.text = opt.title;
+            optTitle.fontSize = 20;
+            optTitle.fontStyle = FontStyles.Bold;
+            optTitle.alignment = TextAlignmentOptions.Center;
+            optTitle.color = new Color(1f, 0.95f, 0.4f);
+            RectTransform optTitleRect = optTitleObj.GetComponent<RectTransform>();
+            optTitleRect.anchoredPosition = new Vector2(0, 50);
+            optTitleRect.sizeDelta = new Vector2(cardWidth - 20, 45);
+
+            // Descrição da melhoria
+            GameObject descObj = new GameObject("CardDesc");
+            descObj.transform.SetParent(cardObj.transform, false);
+            TextMeshProUGUI optDesc = descObj.AddComponent<TextMeshProUGUI>();
+            optDesc.text = opt.description;
+            optDesc.fontSize = 15;
+            optDesc.alignment = TextAlignmentOptions.Center;
+            optDesc.color = Color.white;
+            RectTransform descRect = descObj.GetComponent<RectTransform>();
+            descRect.anchoredPosition = new Vector2(0, -10);
+            descRect.sizeDelta = new Vector2(cardWidth - 30, 65);
+
+            // Selo de Concedido
+            GameObject badgeObj = new GameObject("CardBadge");
+            badgeObj.transform.SetParent(cardObj.transform, false);
+            TextMeshProUGUI badgeTMP = badgeObj.AddComponent<TextMeshProUGUI>();
+            badgeTMP.text = "✔ CONCEDIDO!";
+            badgeTMP.fontSize = 16;
+            badgeTMP.fontStyle = FontStyles.Bold;
+            badgeTMP.alignment = TextAlignmentOptions.Center;
+            badgeTMP.color = new Color(0.3f, 1f, 0.5f);
+            RectTransform badgeRect = badgeObj.GetComponent<RectTransform>();
+            badgeRect.anchoredPosition = new Vector2(0, -65);
+            badgeRect.sizeDelta = new Vector2(cardWidth - 20, 30);
+        }
+
+        // Botão "COLETAR TUDO"
+        GameObject collectBtnObj = new GameObject("CollectButton");
+        collectBtnObj.transform.SetParent(levelUpPanel.transform, false);
+        RectTransform btnRect = collectBtnObj.AddComponent<RectTransform>();
+        btnRect.anchoredPosition = new Vector2(0, -150);
+        btnRect.sizeDelta = new Vector2(250, 50);
+
+        Image btnImg = collectBtnObj.AddComponent<Image>();
+        btnImg.color = new Color(0.95f, 0.75f, 0.15f, 1f);
+
+        Button btn = collectBtnObj.AddComponent<Button>();
+        ColorBlock cb = btn.colors;
+        cb.highlightedColor = new Color(1f, 0.9f, 0.35f, 1f);
+        cb.pressedColor = new Color(0.8f, 0.6f, 0.1f, 1f);
+        btn.colors = cb;
+
+        Outline btnOutline = collectBtnObj.AddComponent<Outline>();
+        btnOutline.effectColor = Color.black;
+        btnOutline.effectDistance = new Vector2(2, 2);
+
+        GameObject btnTextObj = new GameObject("BtnText");
+        btnTextObj.transform.SetParent(collectBtnObj.transform, false);
+        TextMeshProUGUI btnText = btnTextObj.AddComponent<TextMeshProUGUI>();
+        btnText.text = "COLETAR TUDO";
+        btnText.fontSize = 22;
+        btnText.fontStyle = FontStyles.Bold;
+        btnText.alignment = TextAlignmentOptions.Center;
+        btnText.color = Color.black;
+        RectTransform btnTextRect = btnTextObj.GetComponent<RectTransform>();
+        btnTextRect.anchoredPosition = Vector2.zero;
+        btnTextRect.sizeDelta = new Vector2(250, 50);
+
+        btn.onClick.AddListener(() =>
+        {
+            if (levelUpPanel != null) Destroy(levelUpPanel);
+            GlobalVariables._gameIsPaused = false;
+            Time.timeScale = 1f;
+        });
     }
 
     private void SelectUpgrade(UpgradeOption option)

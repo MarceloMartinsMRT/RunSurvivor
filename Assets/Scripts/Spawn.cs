@@ -60,6 +60,36 @@ public class Spawn : MonoBehaviour
         }
     }
 
+    public EnemyBoss SpawnBoss(string title, int health, int damage, float speed, float scale, int chestUpgrades)
+    {
+        if (player == null || enemies == null || enemies.Count == 0) return null;
+
+        Vector2 randomDir = Random.insideUnitCircle.normalized;
+        if (randomDir == Vector2.zero) randomDir = Vector2.up;
+        Vector2 bossPos = (Vector2)player.transform.position + randomDir * 14f;
+
+        GameObject prefab = enemies[Random.Range(0, enemies.Count)];
+        GameObject bossObj = Instantiate(prefab, bossPos, Quaternion.identity);
+
+        Enemy oldEnemy = bossObj.GetComponent<Enemy>();
+        if (oldEnemy != null)
+        {
+            oldEnemy.enabled = false;
+            Destroy(oldEnemy);
+        }
+
+        EnemyBoss boss = bossObj.AddComponent<EnemyBoss>();
+        boss.bossTitle = title;
+        boss.Health = health;
+        boss.Damage = damage;
+        boss.Speed = speed;
+        boss.XpReward = 40;
+        boss.chestUpgrades = chestUpgrades;
+        bossObj.transform.localScale = Vector3.one * scale;
+
+        return boss;
+    }
+
     GameObject RandomEnemy()
     {
         if (enemies == null || enemies.Count == 0) return null;

@@ -88,15 +88,58 @@ public class LevelUpManager : MonoBehaviour
         }
     }
 
+    public void SetupStartingWeapon(int characterId)
+    {
+        if (characterId == 0)
+        {
+            hadoukenLevel = 1;
+        }
+        else if (characterId == 1)
+        {
+            hadoukenLevel = 0;
+            if (throwingKnives != null)
+            {
+                throwingKnives.UnlockOrUpgrade(); // Inicia com Facas de Arremesso Lv 1!
+            }
+        }
+    }
+
     public void ShowLevelUp()
     {
         GlobalVariables._gameIsPaused = true;
         Time.timeScale = 0f;
 
         List<UpgradeOption> availableUpgrades = GetAvailableUpgrades();
-        // Embaralha e pega até 3 opções aleatórias
+        // Embaralha opções disponíveis
         Shuffle(availableUpgrades);
-        List<UpgradeOption> selected = availableUpgrades.GetRange(0, Mathf.Min(3, availableUpgrades.Count));
+
+        List<UpgradeOption> selected = new List<UpgradeOption>();
+
+        // SE O JOGADOR NÃO ESTIVER COM A VIDA MÁXIMA, GARANTE A OPÇÃO DE RECUPERAÇÃO DE HP
+        if (player != null && player.currentHealthPoints < player.maxHealth)
+        {
+            float missingHp = player.maxHealth - player.currentHealthPoints;
+            int healAmount = Mathf.Min(Mathf.RoundToInt(missingHp), Mathf.Max(35, Mathf.RoundToInt(player.maxHealth * 0.4f)));
+
+            UpgradeOption healOption = new UpgradeOption
+            {
+                id = "vital_heal",
+                title = "Poção de Cura Vital",
+                description = $"Recupera +{healAmount} HP imediatamente! (Vida atual: {Mathf.RoundToInt(player.currentHealthPoints)}/{Mathf.RoundToInt(player.maxHealth)})",
+                applyUpgrade = () =>
+                {
+                    player.Heal(healAmount);
+                }
+            };
+
+            selected.Add(healOption);
+        }
+
+        // Completa as vagas restantes até 3 opções com melhorias aleatórias
+        for (int i = 0; i < availableUpgrades.Count && selected.Count < 3; i++)
+        {
+            selected.Add(availableUpgrades[i]);
+        }
 
         DisplayUI(selected);
     }
@@ -141,17 +184,28 @@ public class LevelUpManager : MonoBehaviour
             list.Add(new UpgradeOption
             {
                 id = "hadouken",
-                title = "Hadouken Lv " + (hadoukenLevel + 1),
-                description = hadoukenLevel % 2 == 1 ? "+1 Projétil extra em leque!" : "+30% Dano de Hadouken e recarga mais rápida!",
+                title = hadoukenLevel == 0 ? "Nova Arma: Hadouken" : "Hadouken Lv " + (hadoukenLevel + 1),
+                description = hadoukenLevel == 0 
+                    ? "Dispara esferas místicas de energia que perfuram inimigos." 
+                    : (hadoukenLevel % 2 == 1 ? "+1 Projétil extra em leque!" : "+30% Dano de Hadouken e recarga mais rápida!"),
                 applyUpgrade = () =>
                 {
                     hadoukenLevel++;
-                    if (hadoukenLevel % 2 == 0)
-                        player.AddExtraProjectile(1);
+                    if (hadoukenLevel == 1)
+                    {
+                        if (player != null) player.EnableHadouken();
+                    }
+                    else if (hadoukenLevel % 2 == 0)
+                    {
+                        if (player != null) player.AddExtraProjectile(1);
+                    }
                     else
                     {
-                        player.increasePower(1.5f);
-                        player.setFireRate(20f);
+                        if (player != null)
+                        {
+                            player.increasePower(1.5f);
+                            player.setFireRate(20f);
+                        }
                     }
                 }
             });
@@ -368,9 +422,17 @@ public class LevelUpManager : MonoBehaviour
             cb.pressedColor = new Color(0.1f, 0.5f, 0.8f, 1f);
             btn.colors = cb;
 
-            // Borda colorida
+            // Borda colorida (se for cura, borda verde-esmeralda medicinal)
             Outline outline = cardObj.AddComponent<Outline>();
-            outline.effectColor = new Color(0.3f, 0.6f, 0.9f, 0.8f);
+            if (opt.id == "vital_heal")
+            {
+                outline.effectColor = new Color(0.2f, 0.95f, 0.4f, 0.9f);
+                cardBg.color = new Color(0.08f, 0.25f, 0.15f, 0.95f);
+            }
+            else
+            {
+                outline.effectColor = new Color(0.3f, 0.6f, 0.9f, 0.8f);
+            }
             outline.effectDistance = new Vector2(2, 2);
 
             // Nome da melhoria
@@ -381,7 +443,7 @@ public class LevelUpManager : MonoBehaviour
             optTitle.fontSize = 20;
             optTitle.fontStyle = FontStyles.Bold;
             optTitle.alignment = TextAlignmentOptions.Center;
-            optTitle.color = new Color(1f, 0.9f, 0.4f);
+            optTitle.color = (opt.id == "vital_heal") ? new Color(0.3f, 1f, 0.5f) : new Color(1f, 0.9f, 0.4f);
             RectTransform optTitleRect = optTitleObj.GetComponent<RectTransform>();
             optTitleRect.anchoredPosition = new Vector2(0, 50);
             optTitleRect.sizeDelta = new Vector2(cardWidth - 20, 45);

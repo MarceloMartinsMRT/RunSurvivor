@@ -27,8 +27,8 @@ public class GlobalVariables : MonoBehaviour
 
     void Update()
     {
-        // Se estiver em Game Over, não abre o menu de pausa por cima
-        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
+        // Se estiver em Game Over ou no menu inicial de seleção de herói, não abre o menu de pausa por cima
+        if (GameManager.Instance != null && (GameManager.Instance.isGameOver || !GameManager.Instance.isCharacterSelected)) return;
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {

@@ -52,6 +52,7 @@ public class Player : MonoBehaviour
     private Vector2 lastFacingDirection = Vector2.right;
     private SpriteRenderer movementCursorRenderer;
     private static Sprite cachedArrowSprite;
+    private GameObject hadoukenPrefab;
 
     public Vector2 Direction { get => _direction; set => _direction = value; }
     public Vector2 LastFacingDirection => lastFacingDirection;
@@ -61,6 +62,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
         rig = GetComponent<Rigidbody2D>();
+        hadoukenPrefab = power1;
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
     }
@@ -315,6 +317,45 @@ public class Player : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void EnableHadouken()
+    {
+        power1 = hadoukenPrefab;
+    }
+
+    public void SetCharacter(int characterId)
+    {
+        if (characterId == 0)
+        {
+            // Personagem 1: Mago Arcano / Guerreiro do Hadouken
+            power1 = hadoukenPrefab;
+            maxHealth = 100f;
+            currentHealthPoints = 100f;
+            speed = 5.0f;
+            critChance = 0.10f;
+            critMultiplier = 2.0f;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = Color.white;
+            }
+        }
+        else if (characterId == 1)
+        {
+            // Personagem 2: Mestre das Lâminas (Mesmo prefab, atributos e cor ninja/esmeralda distintos)
+            power1 = null; // Inicia sem Hadouken
+            maxHealth = 85f;
+            currentHealthPoints = 85f;
+            speed = 6.0f; // +20% Velocidade de Movimento
+            critChance = 0.25f; // +15% Chance de Crítico inicial (25% total!)
+            critMultiplier = 2.2f;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = new Color(0.45f, 1f, 0.7f, 1f); // Tom Esmeralda Ágil
+            }
+        }
+
+        UpdateHealthUI();
     }
 
     public int CalculateDamage(float baseDamage, out bool isCrit)

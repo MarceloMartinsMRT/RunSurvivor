@@ -9,7 +9,7 @@ public class EnemyMushroom : Enemy
     {
         base.Awake();
         _health = 45;
-        _speed = 0.5f; // Tanque lento (1x Base), 10% da velocidade do Player (5.0)
+        _speed = 0.4f; // Reduzido de 0.5f para 0.4f
         _damage = 15;
         _attackCooldown = 0.9f;
         _xpReward = 2;

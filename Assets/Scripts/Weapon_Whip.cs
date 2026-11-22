@@ -105,6 +105,7 @@ public class Weapon_Whip : MonoBehaviour
 
     private void PerformSlash(float dirX)
     {
+        SoundManager.PlayShoot();
         if (slashSprite == null)
         {
             slashSprite = CreateSlashSprite();
@@ -212,3 +213,4 @@ public class Weapon_Whip : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 32f);
     }
 }
+

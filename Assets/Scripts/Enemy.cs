@@ -6,7 +6,7 @@ public class Enemy : MonoBehaviour
     [Header("Enemy Stats")]
     [SerializeField] protected int _health = 25;
     [SerializeField] protected int _originalHealth;
-    [SerializeField] protected float _speed = 2.5f;
+    [SerializeField] protected float _speed = 1.8f; // Velocidade base reduzida para melhor balanceamento
     [SerializeField] protected int _damage = 10;
     [SerializeField] protected float _attackCooldown = 0.8f;
     [SerializeField] protected int _xpReward = 1;
@@ -37,6 +37,27 @@ public class Enemy : MonoBehaviour
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (col == null) col = GetComponent<Collider2D>();
+
+        EnlargeCollider();
+    }
+
+    private void EnlargeCollider()
+    {
+        if (col == null) return;
+
+        // Amplia os colisores para que os monstros mantenham distância física e não se amontoem
+        if (col is CapsuleCollider2D capsule)
+        {
+            capsule.size = new Vector2(Mathf.Max(capsule.size.x, 0.45f), Mathf.Max(capsule.size.y, 0.55f));
+        }
+        else if (col is CircleCollider2D circle)
+        {
+            circle.radius = Mathf.Max(circle.radius, 0.45f);
+        }
+        else if (col is BoxCollider2D box)
+        {
+            box.size = new Vector2(Mathf.Max(box.size.x, 0.5f), Mathf.Max(box.size.y, 0.5f));
+        }
     }
 
     protected virtual void Start()
@@ -64,8 +85,34 @@ public class Enemy : MonoBehaviour
         Vector2 toPlayer = (Vector2)playerTransform.position - rb.position;
         Vector2 direction = toPlayer.normalized;
 
-        // Movimentação contínua em direção ao jogador
-        rb.MovePosition(rb.position + direction * _speed * Time.fixedDeltaTime);
+        // Força de separação suave (boids repulsion) para evitar amontoamento excessivo
+        Vector2 separation = Vector2.zero;
+        Collider2D[] nearby = Physics2D.OverlapCircleAll(rb.position, 0.95f, 1 << 6);
+        int separateCount = 0;
+
+        for (int i = 0; i < nearby.Length; i++)
+        {
+            if (nearby[i] != null && nearby[i].gameObject != gameObject)
+            {
+                Vector2 diff = rb.position - (Vector2)nearby[i].transform.position;
+                float d = diff.magnitude;
+                if (d > 0.001f && d < 0.95f)
+                {
+                    separation += diff.normalized * ((0.95f - d) / 0.95f);
+                    separateCount++;
+                }
+            }
+        }
+
+        if (separateCount > 0)
+        {
+            separation /= separateCount;
+        }
+
+        Vector2 finalMoveDir = (direction + separation * 1.5f).normalized;
+
+        // Movimentação contínua em direção ao jogador respeitando o espaçamento do enxame
+        rb.MovePosition(rb.position + finalMoveDir * _speed * Time.fixedDeltaTime);
 
         // Orientação do sprite
         if (spriteRenderer != null && direction.x != 0)
@@ -74,7 +121,7 @@ public class Enemy : MonoBehaviour
         }
 
         // Checagem de dano de contato contínuo
-        if (toPlayer.sqrMagnitude <= 1.0f)
+        if (toPlayer.sqrMagnitude <= 1.2f)
         {
             TryDealContactDamage();
         }
@@ -112,6 +159,9 @@ public class Enemy : MonoBehaviour
         if (_isDead) return;
 
         _health -= damage;
+
+        // Feedback sonoro de impacto
+        SoundManager.PlayHit();
 
         // Feedback visual rápido de dano (flash vermelho)
         if (gameObject.activeInHierarchy && spriteRenderer != null)

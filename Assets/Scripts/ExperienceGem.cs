@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ExperienceGem : MonoBehaviour
 {
@@ -32,7 +32,7 @@ public class ExperienceGem : MonoBehaviour
 
         float distance = Vector2.Distance(transform.position, playerTransform.position);
 
-        // Verifica se entrou no raio do ímã do player
+        // Verifica se entrou no raio do Ã­mÃ£ do player
         if (!isBeingPulled && player != null)
         {
             if (distance <= player.magnetRadius)
@@ -41,7 +41,7 @@ public class ExperienceGem : MonoBehaviour
             }
         }
 
-        // Se está sendo atraído, voa acelerando até o player
+        // Se estÃ¡ sendo atraÃ­do, voa acelerando atÃ© o player
         if (isBeingPulled)
         {
             currentSpeed += acceleration * Time.deltaTime;
@@ -60,6 +60,7 @@ public class ExperienceGem : MonoBehaviour
         if (player != null)
         {
             player.AddExperience(xpValue);
+            SoundManager.PlayXpPickup();
         }
         Destroy(gameObject);
     }
@@ -73,7 +74,7 @@ public class ExperienceGem : MonoBehaviour
         SpriteRenderer sr = gemObj.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 5;
 
-        // Se tiver sprite padrão gerado, usa; senão gera um losango de cristal
+        // Se tiver sprite padrÃ£o gerado, usa; senÃ£o gera um losango de cristal
         if (defaultGemSprite == null)
         {
             defaultGemSprite = CreateDiamondSprite();
@@ -129,3 +130,4 @@ public class ExperienceGem : MonoBehaviour
         return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16f);
     }
 }
+

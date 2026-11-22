@@ -9,7 +9,7 @@ public class EnemyGoblin : Enemy
     {
         base.Awake();
         _health = 25;
-        _speed = 2.0f; // Médio-rápido (4x Mushroom), 40% da velocidade do Player (5.0)
+        _speed = 1.5f; // Reduzido de 2.0f para 1.5f
         _damage = 10;
         _attackCooldown = 0.7f;
         _xpReward = 1;

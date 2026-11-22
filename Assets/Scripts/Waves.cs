@@ -65,7 +65,7 @@ public class Waves : MonoBehaviour
         if (!elite90sSpawned && timeElapsed >= 90f)
         {
             elite90sSpawned = true;
-            SpawnBoss("★ MONSTRO ELITE ★", 280, 18, 2.1f, 1.7f, Random.Range(1, 3));
+            SpawnBoss("★ MONSTRO ELITE ★", 280, 18, 1.7f, 1.7f, Random.Range(1, 3));
             ShowBossAlert("⚠ ALERTA: MONSTRO ELITE DETECTADO! ⚠");
         }
 
@@ -73,7 +73,7 @@ public class Waves : MonoBehaviour
         if (!boss3MinSpawned && timeElapsed >= 180f)
         {
             boss3MinSpawned = true;
-            SpawnBoss("★ REI GOBLIN TITÃ ★", 650, 26, 2.1f, 2.3f, 3);
+            SpawnBoss("★ REI GOBLIN TITÃ ★", 650, 26, 1.7f, 2.3f, 3);
             ShowBossAlert("⚠ ALERTA DE CHEFE: REI GOBLIN TITÃ SURGIU! ⚠");
         }
 
@@ -81,7 +81,7 @@ public class Waves : MonoBehaviour
         if (!boss5MinSpawned && timeElapsed >= 300f)
         {
             boss5MinSpawned = true;
-            SpawnBoss("★ COLOSSO DA MORTE ★", 1600, 36, 2.4f, 2.8f, 3);
+            SpawnBoss("★ COLOSSO DA MORTE ★", 1600, 36, 1.9f, 2.8f, 3);
             ShowBossAlert("⚠ ALERTA MÁXIMO: COLOSSO DA MORTE SURGIU! ⚠");
         }
     }

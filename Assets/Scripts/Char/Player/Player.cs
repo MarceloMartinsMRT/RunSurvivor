@@ -298,6 +298,7 @@ public class Player : MonoBehaviour
         if (power1TimeCount >= actualFireRate)
         {
             power1TimeCount = 0f;
+            SoundManager.PlayShoot();
             int totalShots = 1 + extraProjectiles;
 
             if (totalShots == 1)
@@ -378,6 +379,7 @@ public class Player : MonoBehaviour
 
         currentHealthPoints -= damage;
         DamagePopup.CreatePlayerDamage(transform.position, damage);
+        SoundManager.PlayHit();
         if (currentHealthPoints <= 0)
         {
             currentHealthPoints = 0;
@@ -546,3 +548,4 @@ public class Player : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, magnetRadius);
     }
 }
+

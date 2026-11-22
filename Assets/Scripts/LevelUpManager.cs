@@ -106,6 +106,7 @@ public class LevelUpManager : MonoBehaviour
 
     public void ShowLevelUp()
     {
+        SoundManager.PlayLevelUp();
         GlobalVariables._gameIsPaused = true;
         Time.timeScale = 0f;
 
@@ -146,6 +147,7 @@ public class LevelUpManager : MonoBehaviour
 
     public void OpenTreasureChest(int count = 3)
     {
+        SoundManager.PlayChest();
         GlobalVariables._gameIsPaused = true;
         Time.timeScale = 0f;
 
@@ -652,3 +654,4 @@ public class LevelUpManager : MonoBehaviour
         }
     }
 }
+

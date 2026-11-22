@@ -142,7 +142,7 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0.004453472, y: -0.06904786}
-  m_Size: {x: 0.1636123, y: 0.41752586}
+  m_Size: {x: 0.35, y: 0.45}
   m_Direction: 0
 --- !u!50 &1507275709887307638
 Rigidbody2D:
@@ -185,7 +185,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _health: 132
   _originalHealth: 120
-  _speed: 0.5
+  _speed: 0.4
   waves: {fileID: 0}
   animator: {fileID: 3880220137159488060}
   cooldownTime: 8

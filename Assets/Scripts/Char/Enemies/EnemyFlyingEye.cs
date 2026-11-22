@@ -9,7 +9,7 @@ public class EnemyFlyingEye : Enemy
     {
         base.Awake();
         _health = 16;
-        _speed = 3.0f; // Rápido (6x Mushroom), 60% da velocidade do Player (5.0)
+        _speed = 2.2f; // Reduzido de 3.0f para 2.2f
         _damage = 8;
         _attackCooldown = 0.5f;
         _xpReward = 1;

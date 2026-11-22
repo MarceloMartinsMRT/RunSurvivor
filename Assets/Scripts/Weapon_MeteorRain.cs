@@ -133,6 +133,7 @@ public class Weapon_MeteorRain : MonoBehaviour
 
     private IEnumerator SpawnMeteorAt(Vector3 position)
     {
+        SoundManager.PlayShoot(0.65f);
         if (warningSprite == null) warningSprite = CreateWarningCircleSprite();
         if (blastSprite == null) blastSprite = CreateBlastSprite();
 
@@ -268,3 +269,4 @@ public class Weapon_MeteorRain : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 48f);
     }
 }
+

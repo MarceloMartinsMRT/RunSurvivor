@@ -81,6 +81,7 @@ public class Weapon_ThrowingKnives : MonoBehaviour
 
     private void FireKnives()
     {
+        SoundManager.PlayShoot();
         Vector2 dir = player.LastFacingDirection;
         if (dir.sqrMagnitude < 0.01f) dir = Vector2.right;
 
@@ -231,3 +232,4 @@ public class ThrowingKnifeProjectile : MonoBehaviour
         }
     }
 }
+

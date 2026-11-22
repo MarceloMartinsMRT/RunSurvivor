@@ -9,7 +9,7 @@ public class EnemySkeleton : Enemy
     {
         base.Awake();
         _health = 32;
-        _speed = 1.0f; // Médio-lento (2x Mushroom), 20% da velocidade do Player (5.0)
+        _speed = 0.8f; // Reduzido de 1.0f para 0.8f
         _damage = 12;
         _attackCooldown = 0.8f;
         _xpReward = 2;

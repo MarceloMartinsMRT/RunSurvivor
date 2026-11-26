@@ -160,8 +160,10 @@ public class Waves : MonoBehaviour
             _spawn.maxSpawnAmount = 10 + waveCount * 3;
             _spawn.spawnInterval = Mathf.Max(1.2f, 3.5f - (waveCount * 0.2f));
 
-            // Dispara um pequeno enxame no início da nova onda
-            _spawn.SpawnEnemies(8 + waveCount * 2, waveCount * 15);
+            // Dispara um pequeno enxame no início da nova onda respeitando a capacidade máxima
+            int desired = 8 + waveCount * 2;
+            int allowed = Mathf.Min(desired, Mathf.Max(1, _spawn.maxActiveEnemies - Enemy.activeEnemyCount));
+            _spawn.SpawnEnemies(allowed, waveCount * 15);
         }
     }
 

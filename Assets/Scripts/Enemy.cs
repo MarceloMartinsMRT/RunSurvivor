@@ -1,9 +1,11 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public static int activeEnemyCount = 0;
+    public static readonly HashSet<Enemy> activeEnemies = new HashSet<Enemy>();
+    public static int activeEnemyCount => activeEnemies.Count;
 
     [Header("Enemy Stats")]
     [SerializeField] protected int _health = 25;
@@ -66,9 +68,18 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    protected virtual void OnEnable()
+    {
+        activeEnemies.Add(this);
+    }
+
+    protected virtual void OnDisable()
+    {
+        activeEnemies.Remove(this);
+    }
+
     protected virtual void Start()
     {
-        activeEnemyCount++;
         _originalSpeed = _speed;
         _originalHealth = _health;
 
@@ -92,10 +103,21 @@ public class Enemy : MonoBehaviour
         Vector2 toPlayer = (Vector2)playerTransform.position - rb.position;
         float distSqr = toPlayer.sqrMagnitude;
 
-        // Culling / Despawn de inimigos que ficaram muito para trás (> 28 unidades do jogador)
-        if (distSqr > 784f)
+        // Reposicionamento / Culling de monstros muito distantes (> 65 unidades do jogador, bem fora da visão da câmera)
+        if (distSqr > 4225f && !(this is EnemyBoss))
         {
-            Destroy(gameObject);
+            // Se o limite de monstros ativos foi atingido, descarta o monstro para abrir vaga aos novos
+            if (activeEnemyCount >= 150)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            // Caso contrário, reposiciona o monstro na borda externa da ação ao redor do jogador
+            Vector2 randomDir = Random.insideUnitCircle.normalized;
+            if (randomDir == Vector2.zero) randomDir = Vector2.right;
+            float repositionDist = Random.Range(36f, 44f);
+            rb.position = (Vector2)playerTransform.position + randomDir * repositionDist;
             return;
         }
 
@@ -226,7 +248,7 @@ public class Enemy : MonoBehaviour
         if (_isDead) return;
         _isDead = true;
 
-        activeEnemyCount = Mathf.Max(0, activeEnemyCount - 1);
+        activeEnemies.Remove(this);
 
         if (col != null) col.enabled = false;
 
@@ -242,10 +264,7 @@ public class Enemy : MonoBehaviour
 
     void OnDestroy()
     {
-        if (!_isDead)
-        {
-            activeEnemyCount = Mathf.Max(0, activeEnemyCount - 1);
-        }
+        activeEnemies.Remove(this);
     }
 
     public void EnemyKilled()

@@ -13,6 +13,11 @@ public class Spawn : MonoBehaviour
 
     private float timeCount;
 
+    void Awake()
+    {
+        Enemy.activeEnemies.Clear();
+    }
+
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
@@ -44,8 +49,8 @@ public class Spawn : MonoBehaviour
     {
         if (player == null || enemies == null || enemies.Count == 0) return;
 
-        float minDistance = Mathf.Max(12f, radius * 0.8f);
-        float maxDistance = Mathf.Max(15f, radius * 1.2f);
+        float minDistance = Mathf.Max(32f, radius * 0.8f);
+        float maxDistance = Mathf.Max(40f, radius * 1.05f);
 
         for (int i = 0; i < quantity; i++)
         {

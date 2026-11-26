@@ -265,27 +265,36 @@ public class Player : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 16f);
     }
 
+    private static Collider2D[] aimBuffer = new Collider2D[64];
+    private float aimUpdateTimer = 0f;
+    private Transform cachedClosestEnemy;
+
     Transform GetClosestEnemy()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, radius, enemyLayer);
-        Transform closest = null;
-        float minDistanceSqr = float.MaxValue;
-
-        for (int i = 0; i < hits.Length; i++)
+        aimUpdateTimer -= Time.deltaTime;
+        if (aimUpdateTimer <= 0f)
         {
-            if (hits[i] == null) continue;
-            Enemy enemy = hits[i].GetComponent<Enemy>();
-            if (enemy != null && enemy.IsDead) continue;
+            aimUpdateTimer = 0.05f; // Atualiza a mira 20x por segundo sem alocação de memória (Zero GC Alloc)
+            int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, radius, aimBuffer, enemyLayer);
+            cachedClosestEnemy = null;
+            float minDistanceSqr = float.MaxValue;
 
-            float distSqr = (hits[i].transform.position - transform.position).sqrMagnitude;
-            if (distSqr < minDistanceSqr)
+            for (int i = 0; i < hitCount; i++)
             {
-                minDistanceSqr = distSqr;
-                closest = hits[i].transform;
+                if (aimBuffer[i] == null) continue;
+                Enemy enemy = aimBuffer[i].GetComponent<Enemy>();
+                if (enemy != null && enemy.IsDead) continue;
+
+                float distSqr = ((Vector2)aimBuffer[i].transform.position - (Vector2)transform.position).sqrMagnitude;
+                if (distSqr < minDistanceSqr)
+                {
+                    minDistanceSqr = distSqr;
+                    cachedClosestEnemy = aimBuffer[i].transform;
+                }
             }
         }
 
-        return closest;
+        return cachedClosestEnemy;
     }
 
     void PowerOneShoot()
@@ -548,4 +557,5 @@ public class Player : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, magnetRadius);
     }
 }
+
 

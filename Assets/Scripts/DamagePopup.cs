@@ -1,3 +1,4 @@
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -11,6 +12,10 @@ public class DamagePopup : MonoBehaviour
 
     private const float DISAPPEAR_TIMER_MAX = 0.65f;
     private const float OUTLINE_WIDTH = 0.32f;
+
+    // POOL DE OBJETOS DE ALTA PERFORMANCE (Evita Instantiate/Destroy constantes)
+    private static List<DamagePopup> pool = new List<DamagePopup>();
+    private const int MAX_POOL_SIZE = 60;
 
     void Awake()
     {
@@ -94,7 +99,7 @@ public class DamagePopup : MonoBehaviour
 
         disappearTimer -= Time.deltaTime;
 
-        // Fade out na metade final (tanto o texto quanto a borda desaparecem juntos)
+        // Fade out na metade final
         if (disappearTimer < DISAPPEAR_TIMER_MAX * 0.5f)
         {
             float fadeSpeed = 3.5f;
@@ -113,50 +118,66 @@ public class DamagePopup : MonoBehaviour
 
             if (textColor.a <= 0f)
             {
-                Destroy(gameObject);
+                gameObject.SetActive(false); // Retorna ao pool sem destruir o GameObject
             }
         }
     }
 
     public static DamagePopup Create(Vector3 position, int damageAmount, bool isCritical = false)
     {
-        GameObject popupObj = new GameObject("DamagePopup");
         Vector3 spawnPos = position + new Vector3(Random.Range(-0.25f, 0.25f), Random.Range(0.2f, 0.45f), 0f);
-        popupObj.transform.position = spawnPos;
+        DamagePopup popup = GetFromPool();
+        popup.transform.position = spawnPos;
+        popup.gameObject.SetActive(true);
+        popup.Setup(damageAmount, isCritical);
 
-        TextMeshPro tm = popupObj.AddComponent<TextMeshPro>();
-        tm.alignment = TextAlignmentOptions.Center;
-
-        MeshRenderer mr = popupObj.GetComponent<MeshRenderer>();
-        if (mr != null)
-        {
-            mr.sortingOrder = 50; // Na frente de qualquer sprite de monstro e mapa
-        }
-
-        DamagePopup damagePopup = popupObj.AddComponent<DamagePopup>();
-        damagePopup.Setup(damageAmount, isCritical);
-
-        return damagePopup;
+        return popup;
     }
 
     public static DamagePopup CreatePlayerDamage(Vector3 position, int damageAmount)
     {
-        GameObject popupObj = new GameObject("DamagePopup_Player");
         Vector3 spawnPos = position + new Vector3(Random.Range(-0.2f, 0.2f), 0.5f, 0f);
-        popupObj.transform.position = spawnPos;
+        DamagePopup popup = GetFromPool();
+        popup.transform.position = spawnPos;
+        popup.gameObject.SetActive(true);
+        popup.SetupPlayerDamage(damageAmount);
 
-        TextMeshPro tm = popupObj.AddComponent<TextMeshPro>();
-        tm.alignment = TextAlignmentOptions.Center;
+        return popup;
+    }
 
-        MeshRenderer mr = popupObj.GetComponent<MeshRenderer>();
-        if (mr != null)
+    private static DamagePopup GetFromPool()
+    {
+        // 1. Procura um popup inativo na lista do pool
+        for (int i = 0; i < pool.Count; i++)
         {
-            mr.sortingOrder = 55;
+            if (pool[i] != null && !pool[i].gameObject.activeInHierarchy)
+            {
+                return pool[i];
+            }
         }
 
-        DamagePopup damagePopup = popupObj.AddComponent<DamagePopup>();
-        damagePopup.SetupPlayerDamage(damageAmount);
+        // 2. Se não houver inativos e o pool ainda não atingiu o tamanho máximo, cria um novo
+        if (pool.Count < MAX_POOL_SIZE)
+        {
+            GameObject popupObj = new GameObject("DamagePopup_Pooled");
+            TextMeshPro tm = popupObj.AddComponent<TextMeshPro>();
+            tm.alignment = TextAlignmentOptions.Center;
 
-        return damagePopup;
+            MeshRenderer mr = popupObj.GetComponent<MeshRenderer>();
+            if (mr != null)
+            {
+                mr.sortingOrder = 50;
+            }
+
+            DamagePopup damagePopup = popupObj.AddComponent<DamagePopup>();
+            pool.Add(damagePopup);
+            return damagePopup;
+        }
+
+        // 3. Se o pool estiver esgotado no limite, recicla o popup ativo mais antigo (pool[0])
+        DamagePopup recycled = pool[0];
+        pool.RemoveAt(0);
+        pool.Add(recycled);
+        return recycled;
     }
 }

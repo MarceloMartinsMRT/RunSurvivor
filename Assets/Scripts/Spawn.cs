@@ -9,6 +9,7 @@ public class Spawn : MonoBehaviour
     public int minSpawnAmount = 5;
     public int maxSpawnAmount = 15;
     public float radius = 15f;
+    public int maxActiveEnemies = 150; // Limite máximo de inimigos ativos simultâneos para manter 60 FPS
 
     private float timeCount;
 
@@ -25,8 +26,17 @@ public class Spawn : MonoBehaviour
         if (timeCount >= spawnInterval)
         {
             timeCount = 0f;
-            int count = Random.Range(minSpawnAmount, maxSpawnAmount + 1);
-            SpawnEnemies(count, 0);
+
+            // Só gera novos inimigos se não tiver atingido o teto de capacidade
+            if (Enemy.activeEnemyCount < maxActiveEnemies)
+            {
+                int remainingAllowed = maxActiveEnemies - Enemy.activeEnemyCount;
+                int count = Mathf.Min(Random.Range(minSpawnAmount, maxSpawnAmount + 1), remainingAllowed);
+                if (count > 0)
+                {
+                    SpawnEnemies(count, 0);
+                }
+            }
         }
     }
 

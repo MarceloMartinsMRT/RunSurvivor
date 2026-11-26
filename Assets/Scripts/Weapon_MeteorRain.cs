@@ -14,6 +14,8 @@ public class Weapon_MeteorRain : MonoBehaviour
     private float timer = 0f;
     private Player player;
     private LayerMask enemyLayer;
+    private static Collider2D[] targetScanBuffer = new Collider2D[64];
+    private static Collider2D[] blastHitBuffer = new Collider2D[48];
 
     private static Sprite warningSprite;
     private static Sprite blastSprite;
@@ -84,18 +86,18 @@ public class Weapon_MeteorRain : MonoBehaviour
     {
         int total = meteorCount + player.extraProjectiles;
 
-        // Procura inimigos num raio de 9 unidades
-        Collider2D[] potentialTargets = Physics2D.OverlapCircleAll(player.transform.position, 9f, enemyLayer);
+        // Procura inimigos num raio de 9 unidades sem alocação de memória (Zero GC Alloc)
+        int potentialCount = Physics2D.OverlapCircleNonAlloc(player.transform.position, 9f, targetScanBuffer, enemyLayer);
         List<Vector3> targetPositions = new List<Vector3>();
 
-        for (int i = 0; i < potentialTargets.Length; i++)
+        for (int i = 0; i < potentialCount; i++)
         {
-            if (potentialTargets[i] != null)
+            if (targetScanBuffer[i] != null)
             {
-                Enemy e = potentialTargets[i].GetComponent<Enemy>();
+                Enemy e = targetScanBuffer[i].GetComponent<Enemy>();
                 if (e != null && !e.IsDead)
                 {
-                    targetPositions.Add(potentialTargets[i].transform.position);
+                    targetPositions.Add(targetScanBuffer[i].transform.position);
                 }
             }
         }
@@ -170,17 +172,17 @@ public class Weapon_MeteorRain : MonoBehaviour
         blastSr.sortingOrder = 7;
         blastSr.color = Color.white;
 
-        // Dano em Área
-        Collider2D[] hits = Physics2D.OverlapCircleAll(position, blastRadius, enemyLayer);
-        for (int i = 0; i < hits.Length; i++)
+        // Dano em Área sem alocação de memória (Zero GC Alloc)
+        int blastCount = Physics2D.OverlapCircleNonAlloc(position, blastRadius, blastHitBuffer, enemyLayer);
+        for (int i = 0; i < blastCount; i++)
         {
-            if (hits[i] == null) continue;
-            Enemy enemy = hits[i].GetComponent<Enemy>();
+            if (blastHitBuffer[i] == null) continue;
+            Enemy enemy = blastHitBuffer[i].GetComponent<Enemy>();
             if (enemy != null && !enemy.IsDead)
             {
                 bool isCrit = false;
                 int dmg = player != null ? player.CalculateDamage(meteorDamage, out isCrit) : (int)meteorDamage;
-                Vector2 knockback = ((Vector3)hits[i].transform.position - position).normalized;
+                Vector2 knockback = ((Vector3)blastHitBuffer[i].transform.position - position).normalized;
                 if (knockback.sqrMagnitude < 0.01f) knockback = Random.insideUnitCircle.normalized;
 
                 enemy.TakeDamage(dmg, knockback * 1.5f, isCrit);
@@ -269,4 +271,6 @@ public class Weapon_MeteorRain : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 48f);
     }
 }
+
+
 

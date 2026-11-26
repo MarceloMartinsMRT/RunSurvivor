@@ -3,10 +3,12 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    public static int activeEnemyCount = 0;
+
     [Header("Enemy Stats")]
     [SerializeField] protected int _health = 25;
     [SerializeField] protected int _originalHealth;
-    [SerializeField] protected float _speed = 1.8f; // Velocidade base reduzida para melhor balanceamento
+    [SerializeField] protected float _speed = 1.8f;
     [SerializeField] protected int _damage = 10;
     [SerializeField] protected float _attackCooldown = 0.8f;
     [SerializeField] protected int _xpReward = 1;
@@ -22,6 +24,10 @@ public class Enemy : MonoBehaviour
     protected float _lastAttackTime = -999f;
     protected Transform playerTransform;
     protected Player player;
+
+    // Otimização de física sem alocação (Zero GC Alloc)
+    private static Collider2D[] separationBuffer = new Collider2D[6];
+    private Vector2 cachedSeparation = Vector2.zero;
 
     public Waves waves;
 
@@ -62,6 +68,7 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Start()
     {
+        activeEnemyCount++;
         _originalSpeed = _speed;
         _originalHealth = _health;
 
@@ -83,35 +90,47 @@ public class Enemy : MonoBehaviour
         if (GlobalVariables._gameIsPaused || _isDead || playerTransform == null) return;
 
         Vector2 toPlayer = (Vector2)playerTransform.position - rb.position;
+        float distSqr = toPlayer.sqrMagnitude;
+
+        // Culling / Despawn de inimigos que ficaram muito para trás (> 28 unidades do jogador)
+        if (distSqr > 784f)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Vector2 direction = toPlayer.normalized;
 
-        // Força de separação suave (boids repulsion) para evitar amontoamento excessivo
-        Vector2 separation = Vector2.zero;
-        Collider2D[] nearby = Physics2D.OverlapCircleAll(rb.position, 0.95f, 1 << 6);
-        int separateCount = 0;
-
-        for (int i = 0; i < nearby.Length; i++)
+        // OTIMIZAÇÃO: Executa a varredura de separação apenas a cada 3 frames escalonado por instância (Zero GC Alloc)
+        if ((Time.frameCount + GetInstanceID()) % 3 == 0)
         {
-            if (nearby[i] != null && nearby[i].gameObject != gameObject)
+            int hitCount = Physics2D.OverlapCircleNonAlloc(rb.position, 0.95f, separationBuffer, 1 << 6);
+            cachedSeparation = Vector2.zero;
+            int separateCount = 0;
+
+            for (int i = 0; i < hitCount; i++)
             {
-                Vector2 diff = rb.position - (Vector2)nearby[i].transform.position;
-                float d = diff.magnitude;
-                if (d > 0.001f && d < 0.95f)
+                if (separationBuffer[i] != null && separationBuffer[i].gameObject != gameObject)
                 {
-                    separation += diff.normalized * ((0.95f - d) / 0.95f);
-                    separateCount++;
+                    Vector2 diff = rb.position - (Vector2)separationBuffer[i].transform.position;
+                    float d = diff.magnitude;
+                    if (d > 0.001f && d < 0.95f)
+                    {
+                        cachedSeparation += diff.normalized * ((0.95f - d) / 0.95f);
+                        separateCount++;
+                    }
                 }
+            }
+
+            if (separateCount > 0)
+            {
+                cachedSeparation /= separateCount;
             }
         }
 
-        if (separateCount > 0)
-        {
-            separation /= separateCount;
-        }
+        Vector2 finalMoveDir = (direction + cachedSeparation * 1.5f).normalized;
 
-        Vector2 finalMoveDir = (direction + separation * 1.5f).normalized;
-
-        // Movimentação contínua em direção ao jogador respeitando o espaçamento do enxame
+        // Movimentação contínua fluida
         rb.MovePosition(rb.position + finalMoveDir * _speed * Time.fixedDeltaTime);
 
         // Orientação do sprite
@@ -121,7 +140,7 @@ public class Enemy : MonoBehaviour
         }
 
         // Checagem de dano de contato contínuo
-        if (toPlayer.sqrMagnitude <= 1.2f)
+        if (distSqr <= 1.2f)
         {
             TryDealContactDamage();
         }
@@ -207,6 +226,8 @@ public class Enemy : MonoBehaviour
         if (_isDead) return;
         _isDead = true;
 
+        activeEnemyCount = Mathf.Max(0, activeEnemyCount - 1);
+
         if (col != null) col.enabled = false;
 
         // Dropar gema de XP
@@ -217,6 +238,14 @@ public class Enemy : MonoBehaviour
 
         // Destruir imediatamente
         Destroy(gameObject);
+    }
+
+    void OnDestroy()
+    {
+        if (!_isDead)
+        {
+            activeEnemyCount = Mathf.Max(0, activeEnemyCount - 1);
+        }
     }
 
     public void EnemyKilled()

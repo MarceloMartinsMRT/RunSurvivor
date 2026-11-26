@@ -89,14 +89,16 @@ public class Weapon_Aura : MonoBehaviour
         CreateVisualRing();
     }
 
+    private static Collider2D[] auraHitBuffer = new Collider2D[64];
+
     private void PulseDamage()
     {
-        Collider2D[] enemies = Physics2D.OverlapCircleAll(transform.position, auraRadius, enemyLayer);
+        int count = Physics2D.OverlapCircleNonAlloc(transform.position, auraRadius, auraHitBuffer, enemyLayer);
 
-        for (int i = 0; i < enemies.Length; i++)
+        for (int i = 0; i < count; i++)
         {
-            if (enemies[i] == null) continue;
-            Enemy enemy = enemies[i].GetComponent<Enemy>();
+            if (auraHitBuffer[i] == null) continue;
+            Enemy enemy = auraHitBuffer[i].GetComponent<Enemy>();
             if (enemy != null && !enemy.IsDead)
             {
                 bool isCrit = false;
@@ -163,3 +165,4 @@ public class Weapon_Aura : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, auraRadius);
     }
 }
+

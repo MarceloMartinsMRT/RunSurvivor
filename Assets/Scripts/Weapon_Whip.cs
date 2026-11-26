@@ -16,6 +16,7 @@ public class Weapon_Whip : MonoBehaviour
     private float timer = 0f;
     private Player player;
     private LayerMask enemyLayer;
+    private static Collider2D[] whipHitBuffer = new Collider2D[48];
     private static Sprite slashSprite;
 
     void Start()
@@ -124,14 +125,14 @@ public class Weapon_Whip : MonoBehaviour
         sr.sortingOrder = 8;
         sr.color = new Color(0.95f, 0.95f, 1f, 0.95f);
 
-        // Detecção de dano em área com knockback
-        Collider2D[] hits = Physics2D.OverlapBoxAll(slashCenter, boxSize, 0f, enemyLayer);
+        // Detecção de dano em área com knockback (Zero GC Alloc)
+        int hitCount = Physics2D.OverlapBoxNonAlloc(slashCenter, boxSize, 0f, whipHitBuffer, enemyLayer);
         HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            if (hits[i] == null) continue;
-            Enemy enemy = hits[i].GetComponent<Enemy>();
+            if (whipHitBuffer[i] == null) continue;
+            Enemy enemy = whipHitBuffer[i].GetComponent<Enemy>();
             if (enemy != null && !enemy.IsDead && !hitEnemies.Contains(enemy))
             {
                 hitEnemies.Add(enemy);
@@ -213,4 +214,6 @@ public class Weapon_Whip : MonoBehaviour
         return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 32f);
     }
 }
+
+
 

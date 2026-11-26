@@ -12,6 +12,9 @@ public class SoundManager : MonoBehaviour
     private static AudioClip hitClip;
     private static AudioClip levelUpClip;
     private static AudioClip chestClip;
+    private static AudioClip swordSlashClip;
+    private static AudioClip pistolClip;
+    private static AudioClip shotgunClip;
 
     void Awake()
     {
@@ -45,6 +48,39 @@ public class SoundManager : MonoBehaviour
         if (hitClip == null) hitClip = GenerateHitClip();
         if (levelUpClip == null) levelUpClip = GenerateLevelUpClip();
         if (chestClip == null) chestClip = GenerateChestClip();
+        if (swordSlashClip == null) swordSlashClip = GenerateSwordSlashClip();
+        if (pistolClip == null) pistolClip = GeneratePistolClip();
+        if (shotgunClip == null) shotgunClip = GenerateShotgunClip();
+    }
+
+    public static void PlaySwordSlash(float volume = 0.5f)
+    {
+        if (Instance == null) CreateInstance();
+        if (Instance != null && swordSlashClip != null)
+        {
+            Instance.audioSource.pitch = Random.Range(0.92f, 1.08f);
+            Instance.audioSource.PlayOneShot(swordSlashClip, volume);
+        }
+    }
+
+    public static void PlayPistol(float volume = 0.5f)
+    {
+        if (Instance == null) CreateInstance();
+        if (Instance != null && pistolClip != null)
+        {
+            Instance.audioSource.pitch = Random.Range(0.95f, 1.05f);
+            Instance.audioSource.PlayOneShot(pistolClip, volume);
+        }
+    }
+
+    public static void PlayShotgun(float volume = 0.6f)
+    {
+        if (Instance == null) CreateInstance();
+        if (Instance != null && shotgunClip != null)
+        {
+            Instance.audioSource.pitch = Random.Range(0.92f, 1.08f);
+            Instance.audioSource.PlayOneShot(shotgunClip, volume);
+        }
     }
 
     public static void PlayShoot(float volume = 0.45f)
@@ -217,6 +253,84 @@ public class SoundManager : MonoBehaviour
         }
 
         AudioClip clip = AudioClip.Create("SFX_Chest", count, 1, sampleRate, false);
+        clip.SetData(data, 0);
+        return clip;
+    }
+
+    private static AudioClip GenerateSwordSlashClip()
+    {
+        int sampleRate = 44100;
+        float duration = 0.14f;
+        int count = Mathf.RoundToInt(sampleRate * duration);
+        float[] data = new float[count];
+        float phase = 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float t = (float)i / sampleRate;
+            float freq = Mathf.Lerp(1100f, 260f, t / duration);
+            phase += 2f * Mathf.PI * freq / sampleRate;
+            float env = Mathf.Sin((t / duration) * Mathf.PI);
+            float noise = (Random.value * 2f - 1f) * 0.45f;
+            data[i] = (Mathf.Sin(phase) * 0.55f + noise) * env;
+        }
+
+        AudioClip clip = AudioClip.Create("SFX_SwordSlash", count, 1, sampleRate, false);
+        clip.SetData(data, 0);
+        return clip;
+    }
+
+    private static AudioClip GeneratePistolClip()
+    {
+        int sampleRate = 44100;
+        float duration = 0.12f;
+        int count = Mathf.RoundToInt(sampleRate * duration);
+        float[] data = new float[count];
+        float phase = 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 28f);
+            float freq = Mathf.Lerp(900f, 130f, Mathf.Clamp01(t * 12f));
+            phase += 2f * Mathf.PI * freq / sampleRate;
+            float pop = Mathf.Sin(phase);
+            float crack = (Random.value * 2f - 1f) * (t < 0.02f ? 0.9f : 0.2f);
+            data[i] = (pop * 0.6f + crack * 0.4f) * env;
+        }
+
+        AudioClip clip = AudioClip.Create("SFX_Pistol", count, 1, sampleRate, false);
+        clip.SetData(data, 0);
+        return clip;
+    }
+
+    private static AudioClip GenerateShotgunClip()
+    {
+        int sampleRate = 44100;
+        float duration = 0.25f;
+        int count = Mathf.RoundToInt(sampleRate * duration);
+        float[] data = new float[count];
+        float bassPhase = 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 14f);
+            bassPhase += 2f * Mathf.PI * Mathf.Lerp(120f, 45f, t / duration) / sampleRate;
+            float bass = Mathf.Sin(bassPhase) * 0.7f;
+            float blastNoise = (Random.value * 2f - 1f) * (1f - (t / duration));
+
+            // Simulação de clique metálico do pump no final
+            float pumpClick = 0f;
+            if (t > 0.16f && t < 0.19f)
+            {
+                pumpClick = (Random.value * 2f - 1f) * 0.4f;
+            }
+
+            data[i] = (bass * 0.5f + blastNoise * 0.5f + pumpClick) * env;
+        }
+
+        AudioClip clip = AudioClip.Create("SFX_Shotgun", count, 1, sampleRate, false);
         clip.SetData(data, 0);
         return clip;
     }

@@ -24,6 +24,9 @@ public class LevelUpManager : MonoBehaviour
     private Weapon_ThrowingKnives throwingKnives;
     private Weapon_MeteorRain meteorRain;
     private Weapon_Whip whip;
+    private Weapon_Sword sword;
+    private Weapon_Pistol pistol;
+    private Weapon_PumpShotgun pumpShotgun;
 
     private int hadoukenLevel = 1;
 
@@ -44,6 +47,9 @@ public class LevelUpManager : MonoBehaviour
             throwingKnives = playerObj.GetComponentInChildren<Weapon_ThrowingKnives>();
             meteorRain = playerObj.GetComponentInChildren<Weapon_MeteorRain>();
             whip = playerObj.GetComponentInChildren<Weapon_Whip>();
+            sword = playerObj.GetComponentInChildren<Weapon_Sword>();
+            pistol = playerObj.GetComponentInChildren<Weapon_Pistol>();
+            pumpShotgun = playerObj.GetComponentInChildren<Weapon_PumpShotgun>();
 
             // Instancia armas como componentes no Player se ainda não existirem
             if (magicBarrier == null)
@@ -84,6 +90,30 @@ public class LevelUpManager : MonoBehaviour
                 whipObj.transform.SetParent(playerObj.transform);
                 whipObj.transform.localPosition = Vector3.zero;
                 whip = whipObj.AddComponent<Weapon_Whip>();
+            }
+
+            if (sword == null)
+            {
+                GameObject swordObj = new GameObject("Weapon_Sword");
+                swordObj.transform.SetParent(playerObj.transform);
+                swordObj.transform.localPosition = Vector3.zero;
+                sword = swordObj.AddComponent<Weapon_Sword>();
+            }
+
+            if (pistol == null)
+            {
+                GameObject pistolObj = new GameObject("Weapon_Pistol");
+                pistolObj.transform.SetParent(playerObj.transform);
+                pistolObj.transform.localPosition = Vector3.zero;
+                pistol = pistolObj.AddComponent<Weapon_Pistol>();
+            }
+
+            if (pumpShotgun == null)
+            {
+                GameObject shotgunObj = new GameObject("Weapon_PumpShotgun");
+                shotgunObj.transform.SetParent(playerObj.transform);
+                shotgunObj.transform.localPosition = Vector3.zero;
+                pumpShotgun = shotgunObj.AddComponent<Weapon_PumpShotgun>();
             }
         }
     }
@@ -293,7 +323,76 @@ public class LevelUpManager : MonoBehaviour
             });
         }
 
-        // 7. Melhorias Passivas
+        // 7. Espada de Corte (Dano em Arco, Dano Circular 360° e Lançamento de Corte)
+        int swordLv = (sword != null) ? sword.level : 0;
+        if (swordLv < 5)
+        {
+            string swordDesc = "";
+            if (swordLv == 0) swordDesc = "Golpe com lâmina em arco frontal veloz que rasga hordas de inimigos.";
+            else if (swordLv == 1) swordDesc = "+30% Dano, alcance ampliado e arco de corte expandido para 140°!";
+            else if (swordLv == 2) swordDesc = "★ EVOLUÇÃO: DANO CIRCULAR 360°! Giro destruidor que corta tudo ao seu redor!";
+            else if (swordLv == 3) swordDesc = "★ EVOLUÇÃO: LANÇAMENTO DE CORTE! Dispara lâminas de energia cortante voadoras a cada golpe!";
+            else swordDesc = "Mestria da Lâmina: 3 Ondas cortantes em leque, recarga rápida e dano colossal!";
+
+            list.Add(new UpgradeOption
+            {
+                id = "sword",
+                title = swordLv == 0 ? "Nova Arma: Espada de Corte" : "Espada de Corte Lv " + (swordLv + 1),
+                description = swordDesc,
+                applyUpgrade = () =>
+                {
+                    if (sword != null) sword.UnlockOrUpgrade();
+                }
+            });
+        }
+
+        // 8. Pistola Tática (Disparo Rápido, Tiro Duplo e Balas Perfurantes)
+        int pistolLv = (pistol != null) ? pistol.level : 0;
+        if (pistolLv < 5)
+        {
+            string pistolDesc = "";
+            if (pistolLv == 0) pistolDesc = "Disparos balísticos de precisão rápida contra o inimigo mais próximo.";
+            else if (pistolLv == 1) pistolDesc = "+30% Cadência de disparo e dano aumentado.";
+            else if (pistolLv == 2) pistolDesc = "★ EVOLUÇÃO: TIRO DUPLO (Dual Tap)! Dispara duas balas consecutivas por ciclo!";
+            else if (pistolLv == 3) pistolDesc = "★ EVOLUÇÃO: BALAS PERFURANTES! Balas atravessam até 3 inimigos!";
+            else pistolDesc = "Magnum Frenética: Rajada tripla perfurante, intervalo ultraveloz e alto dano!";
+
+            list.Add(new UpgradeOption
+            {
+                id = "pistol",
+                title = pistolLv == 0 ? "Nova Arma: Pistola Tática" : "Pistola Tática Lv " + (pistolLv + 1),
+                description = pistolDesc,
+                applyUpgrade = () =>
+                {
+                    if (pistol != null) pistol.UnlockOrUpgrade();
+                }
+            });
+        }
+
+        // 9. Pump Shotgun (Dispersão de Balins, Chumbo Pesado e Ação Rápida de Bomba)
+        int shotgunLv = (pumpShotgun != null) ? pumpShotgun.level : 0;
+        if (shotgunLv < 5)
+        {
+            string shotgunDesc = "";
+            if (shotgunLv == 0) shotgunDesc = "Calibre 12 que dispara 5 balins em cone com alto knockback e devastação à queima-roupa.";
+            else if (shotgunLv == 1) shotgunDesc = "+2 Balins (7 no total), dano ampliado e cone de tiro expandido.";
+            else if (shotgunLv == 2) shotgunDesc = "★ EVOLUÇÃO: CHUMBO PESADO! Balins perfuram inimigos com knockback massivo!";
+            else if (shotgunLv == 3) shotgunDesc = "★ EVOLUÇÃO: FAST PUMP! Ação rápida da bomba (-28% recarga) e 9 balins por tiro!";
+            else shotgunDesc = "Super Shotgun: 12 balins destruidores, perfuração tripla e dano colossal!";
+
+            list.Add(new UpgradeOption
+            {
+                id = "pump_shotgun",
+                title = shotgunLv == 0 ? "Nova Arma: Pump Shotgun" : "Pump Shotgun Lv " + (shotgunLv + 1),
+                description = shotgunDesc,
+                applyUpgrade = () =>
+                {
+                    if (pumpShotgun != null) pumpShotgun.UnlockOrUpgrade();
+                }
+            });
+        }
+
+        // 10. Melhorias Passivas
         list.Add(new UpgradeOption
         {
             id = "boots",
